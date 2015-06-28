@@ -1,0 +1,1 @@
+global.ooee = require('./OOEEmitter');

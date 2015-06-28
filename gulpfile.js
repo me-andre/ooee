@@ -1,23 +1,12 @@
 var gulp = require('gulp'),
-    args = require('yargs').argv,
     g = {
-        typeScript: require('gulp-typescript'),
-        wrap: require('gulp-wrap')
+        browserify: require('gulp-browserify'),
+        concat: require('gulp-concat')
     };
 
 gulp.task('default', function() {
-    return gulp.src('ts/*')
-        .pipe(g.typeScript({out: 'ooee.js'}))
-        .pipe(g.wrap(wrapTemplate()))
+    return gulp.src('ooee/globalExport.js')
+        .pipe(g.browserify())
+        .pipe(g.concat('ooee.js'))
         .pipe(gulp.dest('.'));
 });
-
-function wrapTemplate() {
-    if (args.wrap) return args.wrap;
-    return [
-        'var ooee = function() {',
-            '<%= contents %>',
-            'return OOEEmitter;',
-        '}();'
-    ].join('\n');
-}

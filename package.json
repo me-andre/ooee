@@ -1,14 +1,17 @@
 {
   "name": "ooee",
+  "main": "ooee/OOEEMitter.js",
   "description": "Object-Oriented Event Emitter",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": false,
   "license": "MIT",
   "repository": "me-andre/ooee",
-  "dependencies": {
+  "devDependencies": {
     "gulp": "^3.9.0",
-    "gulp-typescript": "^2.7.7",
-    "gulp-wrap": "^0.11.0",
-    "yargs": "^3.13.0"
+    "gulp-browserify": "^0.5.1",
+    "gulp-concat": "^2.6.0"
+  },
+  "dependencies": {
+    "lodash": "^3.9.3"
   }
 }
