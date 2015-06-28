@@ -4,6 +4,7 @@
   "version": "0.1.0",
   "private": false,
   "license": "MIT",
+  "repository": "me-andre/ooee",
   "dependencies": {
     "gulp": "^3.9.0",
     "gulp-typescript": "^2.7.7",
