@@ -9,7 +9,7 @@ function LinkedList () {
 _.assign(LinkedList.prototype, {
     each: function (callback, context) {
         if (!context)
-            context = root;
+            context = global;
         var i = 0, item = this.first;
         while (item) {
             callback.call(context, item, i++);

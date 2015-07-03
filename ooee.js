@@ -12280,6 +12280,7 @@ _.assign(LinkedItem.prototype, {
 });
 
 },{"lodash":1}],3:[function(require,module,exports){
+(function (global){
 var _ = require('lodash');
 
 module.exports = LinkedList;
@@ -12291,7 +12292,7 @@ function LinkedList () {
 _.assign(LinkedList.prototype, {
     each: function (callback, context) {
         if (!context)
-            context = root;
+            context = global;
         var i = 0, item = this.first;
         while (item) {
             callback.call(context, item, i++);
@@ -12312,6 +12313,7 @@ _.assign(LinkedList.prototype, {
     }
 });
 
+}).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{"lodash":1}],4:[function(require,module,exports){
 var LinkedList = require('./LinkedList');
 var OOEHandlerMethod = require('./OOEHandlerMethod');
@@ -12408,7 +12410,7 @@ _.assign(OOEListener.prototype, LinkedItem.prototype, {
     off: function () {
         this._list.detach(this);
         this._list = null;
-        this.remove();
+        this.detach();
     }
 });
 

@@ -16,6 +16,6 @@ _.assign(OOEListener.prototype, LinkedItem.prototype, {
     off: function () {
         this._list.detach(this);
         this._list = null;
-        this.remove();
+        this.detach();
     }
 });
