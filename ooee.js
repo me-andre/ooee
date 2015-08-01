@@ -12357,7 +12357,7 @@ function normalizeHandler (handler, method) {
     if (_.isString(method)) {
         handler = new OOEHandlerMethod(handler, method);
     } else if (_.isFunction(handler)) {
-        handler = new OOEHandlerCallback(handler);
+        handler = new OOEHandlerCallback(handler, method);
     } else if (!isEventHandler(handler)) {
         throw new Error(handler + ' is not an event handler');
     }
@@ -12369,17 +12369,22 @@ function isEventHandler (object) {
 }
 
 },{"./LinkedList":3,"./OOEHandlerCallback":5,"./OOEHandlerMethod":6,"./OOEListener":7,"lodash":1}],5:[function(require,module,exports){
+(function (global){
+var _ = require('lodash');
+
 module.exports = OOEHandlerCallback;
 
-function OOEHandlerCallback (callback) {
+function OOEHandlerCallback (callback, context) {
     this._callback = callback;
+    this._context = _.isObject(context) ? context : global;
 }
 
 OOEHandlerCallback.prototype.handleEvent = function (eventObject) {
-    this._callback(eventObject);
+    this._callback.call(this._context, eventObject);
 };
 
-},{}],6:[function(require,module,exports){
+}).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"lodash":1}],6:[function(require,module,exports){
 module.exports = OOEHandlerMethod;
 
 function OOEHandlerMethod (object, method) {

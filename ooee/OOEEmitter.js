@@ -40,7 +40,7 @@ function normalizeHandler (handler, method) {
     if (_.isString(method)) {
         handler = new OOEHandlerMethod(handler, method);
     } else if (_.isFunction(handler)) {
-        handler = new OOEHandlerCallback(handler);
+        handler = new OOEHandlerCallback(handler, method);
     } else if (!isEventHandler(handler)) {
         throw new Error(handler + ' is not an event handler');
     }
