@@ -1,17 +1,32 @@
 {
   "name": "ooee",
-  "main": "ooee/OOEEMitter.js",
-  "description": "Object-Oriented Event Emitter",
-  "version": "0.2.0",
-  "private": false,
+  "version": "1.0.0",
+  "description": "Object-Oriented Event Emitter: on() returns a disposable listener",
   "license": "MIT",
-  "repository": "me-andre/ooee",
-  "devDependencies": {
-    "gulp": "^3.9.0",
-    "gulp-browserify": "^0.5.1",
-    "gulp-concat": "^2.6.0"
+  "repository": "github:me-andre/ooee",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
   },
-  "dependencies": {
-    "lodash": "^3.9.3"
+  "files": [
+    "dist"
+  ],
+  "sideEffects": false,
+  "engines": {
+    "node": ">=22"
+  },
+  "packageManager": "pnpm@12.4.2",
+  "scripts": {
+    "build": "node -e \"fs.rmSync('dist', { recursive: true, force: true })\" && tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "prepublishOnly": "pnpm typecheck && pnpm test && pnpm build"
+  },
+  "devDependencies": {
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.1"
   }
 }
