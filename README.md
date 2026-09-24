@@ -65,11 +65,16 @@ class CountView {
 }
 
 store.on('change', new CountView());
+
+store.on('change', {
+  total: 0,
+  handleEvent(count) {
+    this.total += count; // `this` is the object literal, with its own members typed
+  },
+});
 ```
 
-`handleEvent` is looked up each time an event is dispatched, so you can swap it out later. TypeScript checks an object
-literal written directly in the `on()` call against `{ handleEvent }` alone, so an object with other members should be a
-class instance or a variable.
+`handleEvent` is looked up each time an event is dispatched, so you can swap it out later.
 
 Pass `context` to choose what `this` is inside a function handler. The type of `this` is inferred from it:
 
@@ -80,8 +85,8 @@ store.on('change', function (count) {
 ```
 
 Without a context, `this` is `undefined`. You can't combine `context` with a `handleEvent` object, because the object is
-already its own `this`. `on()` throws a `TypeError` in that case, and also when the handler isn't a function or a
-`handleEvent` object.
+already its own `this`: that's a type error, and `on()` also throws a `TypeError` at runtime. It throws the same error
+when the handler isn't a function or a `handleEvent` object.
 
 ## Removing listeners
 

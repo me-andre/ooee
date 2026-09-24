@@ -142,6 +142,31 @@ describe('handleEvent objects', () => {
     expect(view.rendered).toEqual([4]);
   });
 
+  it('accepts inline object literals that use their own members', () => {
+    const emitter = new Emitter<Events>();
+    const rendered: number[] = [];
+    emitter.on('change', {
+      offset: 10,
+      handleEvent(n) {
+        this.render(n + this.offset);
+      },
+      render(n: number) {
+        rendered.push(n);
+      },
+    });
+    emitter.once('change', {
+      handleEvent(n) {
+        this.render(n);
+      },
+      render(n: number) {
+        rendered.push(-n);
+      },
+    });
+    emitter.emit('change', 1);
+    emitter.emit('change', 2);
+    expect(rendered).toEqual([11, -1, 12]);
+  });
+
   it('looks up handleEvent at dispatch time', () => {
     const emitter = new Emitter<Events>();
     const before = vi.fn();
@@ -220,7 +245,10 @@ describe('context', () => {
 
   it('rejects a context combined with a handleEvent object', () => {
     const emitter = new Emitter<Events>();
+    // @ts-expect-error: a handleEvent object is its own this
     expect(() => emitter.on('change', { handleEvent() {} }, { context: {} })).toThrow(TypeError);
+    // @ts-expect-error: a handleEvent object is its own this
+    expect(() => emitter.once('change', { handleEvent() {} }, { context: {} })).toThrow(TypeError);
   });
 });
 
@@ -429,6 +457,24 @@ describe('types', () => {
     emitter.on('change', function () { this.name; });
     // @ts-expect-error: a this annotation does not supply a context
     emitter.on('change', function (this: { name: string }) {});
+  });
+
+  it('types handleEvent objects', () => {
+    const emitter = new Emitter<Events>();
+    emitter.on('change', {
+      label: 'count',
+      handleEvent(n) {
+        expectTypeOf(n).toEqualTypeOf<number>();
+        expectTypeOf(this.label).toEqualTypeOf<string>();
+      },
+    });
+    emitter.on('ready', { handleEvent() {} });
+    // @ts-expect-error: this is the object literal, which has no such member
+    emitter.on('change', { handleEvent() { this.missing(); } });
+    // @ts-expect-error: wrong payload type
+    emitter.on('change', { handleEvent(n: string) { void n; } });
+    // @ts-expect-error: no handleEvent method
+    expect(() => emitter.on('change', { handle() {} })).toThrow(TypeError);
   });
 
   it('types the listener as disposable', () => {

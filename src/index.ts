@@ -1,10 +1,10 @@
-/**
- * Receives an event's payload: either a function (called with `options.context` as `this`)
- * or a DOM-style object whose `handleEvent()` method is called with the object as `this`.
- */
-export type Handler<T, C = undefined> =
-  | ((this: C, payload: T) => void)
-  | { handleEvent(payload: T): void };
+/** A DOM-style event listener object: `handleEvent()` is called with the object as `this`. */
+export interface HandlerObject<T> {
+  handleEvent(payload: T): void;
+}
+
+/** Receives an event's payload: a function (called with `options.context` as `this`) or a `HandlerObject`. */
+export type Handler<T, C = undefined> = ((this: C, payload: T) => void) | HandlerObject<T>;
 
 /** The part of `AbortSignal` that ooee relies on. DOM and Node signals both satisfy it. */
 export interface AbortSignalLike {
@@ -108,11 +108,40 @@ function isHandler(value: unknown): boolean {
 export class Emitter<Events extends Record<keyof Events, unknown> = Record<string, unknown>> {
   readonly #listeners = new Map<keyof Events, Set<Subscription>>();
 
+  /** Call `handler` with `options.context` as `this` whenever `event` is emitted. */
   on<K extends keyof Events, C = undefined>(
     event: K,
-    handler: Handler<Events[K], NoInfer<C>>,
-    options: ListenOptions<C> = {},
-  ): Listener {
+    handler: (this: NoInfer<C>, payload: Events[K]) => void,
+    options?: ListenOptions<C>,
+  ): Listener;
+  /** Call `handler.handleEvent()` whenever `event` is emitted. */
+  on<K extends keyof Events, H extends HandlerObject<Events[K]>>(
+    event: K,
+    // ThisType lets an inline object literal use its own members through `this`.
+    handler: H & ThisType<H>,
+    options?: Omit<ListenOptions, 'context'>,
+  ): Listener;
+  // Implementation signatures use `any`: a callback typed for one payload isn't a Handler<unknown>.
+  on(event: keyof Events, handler: Handler<any, any>, options?: ListenOptions<unknown>): Listener {
+    return this.#on(event, handler, options);
+  }
+
+  /** Same as `on(event, handler, { ...options, once: true })`. */
+  once<K extends keyof Events, C = undefined>(
+    event: K,
+    handler: (this: NoInfer<C>, payload: Events[K]) => void,
+    options?: Omit<ListenOptions<C>, 'once'>,
+  ): Listener;
+  once<K extends keyof Events, H extends HandlerObject<Events[K]>>(
+    event: K,
+    handler: H & ThisType<H>,
+    options?: Omit<ListenOptions, 'context' | 'once'>,
+  ): Listener;
+  once(event: keyof Events, handler: Handler<any, any>, options?: ListenOptions<unknown>): Listener {
+    return this.#on(event, handler, { ...options, once: true });
+  }
+
+  #on(event: keyof Events, handler: Handler<unknown, unknown>, options: ListenOptions<unknown> = {}): Listener {
     const { once = false, signal, context } = options;
     if (!isHandler(handler)) {
       throw new TypeError('ooee: handler must be a function or an object with a handleEvent() method');
@@ -120,27 +149,18 @@ export class Emitter<Events extends Record<keyof Events, unknown> = Record<strin
     if (typeof handler !== 'function' && context !== undefined) {
       throw new TypeError('ooee: context cannot be used with a handleEvent object');
     }
-    if (signal?.aborted) return new Subscription(handler as Handler<unknown, unknown>, context, once, null);
+    if (signal?.aborted) return new Subscription(handler, context, once, null);
 
     const set = this.#listeners.get(event) ?? new Set<Subscription>();
     this.#listeners.set(event, set);
     const abort = () => subscription.off();
-    const subscription = new Subscription(handler as Handler<unknown, unknown>, context, once, set, () => {
+    const subscription = new Subscription(handler, context, once, set, () => {
       if (set.size === 0) this.#listeners.delete(event);
       signal?.removeEventListener('abort', abort);
     });
     set.add(subscription);
     signal?.addEventListener('abort', abort, { once: true });
     return subscription;
-  }
-
-  /** Same as `on(event, handler, { ...options, once: true })`. */
-  once<K extends keyof Events, C = undefined>(
-    event: K,
-    handler: Handler<Events[K], NoInfer<C>>,
-    options: Omit<ListenOptions<C>, 'once'> = {},
-  ): Listener {
-    return this.on(event, handler, { ...options, once: true });
   }
 
   /**
